@@ -1,0 +1,93 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Puwit\Model;
+
+use Puwit\Database\Connection;
+
+class ModelRegistry
+{
+    private array $cache = [];
+
+    public function __construct(private readonly Connection $conn) {}
+
+    public function all(): array
+    {
+        if (!empty($this->cache)) {
+            return $this->cache;
+        }
+
+        $rows = $this->conn->select("SELECT * FROM puwit_models ORDER BY name");
+        foreach ($rows as $row) {
+            $def = ModelDefinition::fromRow($row);
+            $this->cache[$def->name] = $def;
+        }
+
+        return $this->cache;
+    }
+
+    public function find(string $name): ?ModelDefinition
+    {
+        if (isset($this->cache[$name])) {
+            return $this->cache[$name];
+        }
+
+        $row = $this->conn->selectOne(
+            "SELECT * FROM puwit_models WHERE name = ?",
+            [$name]
+        );
+
+        if ($row === null) {
+            return null;
+        }
+
+        $def = ModelDefinition::fromRow($row);
+        $this->cache[$name] = $def;
+        return $def;
+    }
+
+    public function persist(ModelDefinition $definition): void
+    {
+        $this->conn->insert(
+            "INSERT INTO puwit_models (name, table_name, fields, relations) VALUES (?, ?, ?, ?)",
+            [
+                $definition->name,
+                $definition->tableName,
+                json_encode(array_map(fn($f) => $f->toArray(), $definition->fields)),
+                json_encode($definition->relations),
+            ]
+        );
+
+        $this->cache[$definition->name] = $definition;
+    }
+
+    public function update(ModelDefinition $definition): void
+    {
+        $this->conn->affectingStatement(
+            "UPDATE puwit_models SET fields = ?, relations = ?, updated_at = ? WHERE name = ?",
+            [
+                json_encode(array_map(fn($f) => $f->toArray(), $definition->fields)),
+                json_encode($definition->relations),
+                date('Y-m-d H:i:s'),
+                $definition->name,
+            ]
+        );
+
+        $this->cache[$definition->name] = $definition;
+    }
+
+    public function delete(string $name): void
+    {
+        $this->conn->affectingStatement(
+            "DELETE FROM puwit_models WHERE name = ?",
+            [$name]
+        );
+        unset($this->cache[$name]);
+    }
+
+    public function invalidate(string $name): void
+    {
+        unset($this->cache[$name]);
+    }
+}

@@ -1,0 +1,26 @@
+# Dependencies
+/vendor/
+/composer.phar
+
+# Environment
+/.env
+/*.pem
+
+# IDE & tools
+/.claude
+/.idea/
+/.vscode/
+*.DS_Store
+Thumbs.db
+
+# PHP
+*.cache
+*.log
+/storage/logs/*.log
+
+# Database
+/storage/database.sqlite
+/storage/*.sqlite
+
+# Composer
+composer.lock
