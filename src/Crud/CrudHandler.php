@@ -177,8 +177,39 @@ class CrudHandler
             if ($partial && !array_key_exists($field->name, $data)) {
                 continue;
             }
-            if (!$field->nullable && $field->default === null && !array_key_exists($field->name, $data)) {
-                $errors[] = "{$field->name} is required";
+            if (!array_key_exists($field->name, $data)) {
+                if (!$field->nullable && $field->default === null) {
+                    $errors[] = "{$field->name} is required";
+                }
+                continue;
+            }
+
+            $value = $data[$field->name];
+            if ($value === null) {
+                if (!$field->nullable) {
+                    $errors[] = "{$field->name} cannot be null";
+                }
+                continue;
+            }
+
+            $typeError = match ($field->type) {
+                'int'      => filter_var($value, FILTER_VALIDATE_INT) === false
+                                ? "{$field->name} must be an integer"
+                                : null,
+                'float'    => !is_numeric($value)
+                                ? "{$field->name} must be numeric"
+                                : null,
+                'boolean'  => !is_bool($value) && !in_array($value, [0, 1, '0', '1'], true)
+                                ? "{$field->name} must be a boolean"
+                                : null,
+                'relation' => filter_var($value, FILTER_VALIDATE_INT) === false || (int)$value < 1
+                                ? "{$field->name} must be a positive integer (foreign key)"
+                                : null,
+                default    => null,
+            };
+
+            if ($typeError !== null) {
+                $errors[] = $typeError;
             }
         }
 

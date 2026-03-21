@@ -6,6 +6,8 @@ namespace Puwit\Database;
 
 class QueryBuilder
 {
+    private const ALLOWED_OPS = ['=', '!=', '<>', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE'];
+
     private string $table    = '';
     private array  $wheres   = [];   // [['col', 'op', 'val'], ...]
     private array  $orders   = [];
@@ -23,6 +25,10 @@ class QueryBuilder
 
     public function where(string $column, mixed $value, string $op = '='): self
     {
+        $op = strtoupper($op);
+        if (!in_array($op, self::ALLOWED_OPS, true)) {
+            throw new \InvalidArgumentException("Invalid operator: {$op}");
+        }
         $clone           = clone $this;
         $clone->wheres[] = [$column, $op, $value];
         return $clone;
@@ -54,7 +60,8 @@ class QueryBuilder
     {
         [$whereSql, $whereBindings, $nextIdx] = $this->buildWhere(1);
 
-        $sql = "SELECT * FROM {$this->table}{$whereSql}";
+        $qt  = $this->qi($this->table);
+        $sql = "SELECT * FROM {$qt}{$whereSql}";
         $sql .= $this->buildOrder();
         $sql .= $this->buildLimit();
 
@@ -65,7 +72,8 @@ class QueryBuilder
     {
         [$whereSql, $whereBindings] = $this->buildWhere(1);
 
-        $sql = "SELECT COUNT(*) as cnt FROM {$this->table}{$whereSql}";
+        $qt  = $this->qi($this->table);
+        $sql = "SELECT COUNT(*) as cnt FROM {$qt}{$whereSql}";
         $row = $this->conn->selectOne($sql, $whereBindings);
         return (int)($row['cnt'] ?? 0);
     }
@@ -77,7 +85,6 @@ class QueryBuilder
 
     public function insert(array $data): string|false
     {
-        $columns      = array_keys($data);
         $placeholders = [];
         $values       = [];
         $idx          = 1;
@@ -87,38 +94,49 @@ class QueryBuilder
             $values[]       = $value;
         }
 
-        $cols = implode(', ', $columns);
+        $cols = implode(', ', array_map(fn($c) => $this->qi($c), array_keys($data)));
         $phs  = implode(', ', $placeholders);
+        $qt   = $this->qi($this->table);
 
         return $this->conn->insert(
-            "INSERT INTO {$this->table} ({$cols}) VALUES ({$phs})",
+            "INSERT INTO {$qt} ({$cols}) VALUES ({$phs})",
             $values
         );
     }
 
     public function update(array $data): int
     {
+        if (empty($this->wheres)) {
+            throw new \LogicException('update() requires at least one where() condition');
+        }
+
         $sets    = [];
         $values  = [];
         $idx     = 1;
 
         foreach ($data as $col => $value) {
-            $sets[]   = "{$col} = " . $this->conn->dialect()->placeholder($idx++);
+            $sets[]   = $this->qi($col) . ' = ' . $this->conn->dialect()->placeholder($idx++);
             $values[] = $value;
         }
 
         [$whereSql, $whereBindings] = $this->buildWhere($idx);
 
-        $sql = "UPDATE {$this->table} SET " . implode(', ', $sets) . $whereSql;
+        $qt  = $this->qi($this->table);
+        $sql = "UPDATE {$qt} SET " . implode(', ', $sets) . $whereSql;
 
         return $this->conn->affectingStatement($sql, array_merge($values, $whereBindings));
     }
 
     public function delete(): int
     {
+        if (empty($this->wheres)) {
+            throw new \LogicException('delete() requires at least one where() condition');
+        }
+
         [$whereSql, $whereBindings] = $this->buildWhere(1);
 
-        $sql = "DELETE FROM {$this->table}{$whereSql}";
+        $qt  = $this->qi($this->table);
+        $sql = "DELETE FROM {$qt}{$whereSql}";
 
         return $this->conn->affectingStatement($sql, $whereBindings);
     }
@@ -134,7 +152,7 @@ class QueryBuilder
         $idx      = $startIdx;
 
         foreach ($this->wheres as [$col, $op, $val]) {
-            $parts[]    = "{$col} {$op} " . $this->conn->dialect()->placeholder($idx++);
+            $parts[]    = $this->qi($col) . " {$op} " . $this->conn->dialect()->placeholder($idx++);
             $bindings[] = $val;
         }
 
@@ -146,8 +164,13 @@ class QueryBuilder
         if (empty($this->orders)) {
             return '';
         }
-        $parts = array_map(fn($o) => "{$o[0]} {$o[1]}", $this->orders);
+        $parts = array_map(fn($o) => $this->qi($o[0]) . " {$o[1]}", $this->orders);
         return ' ORDER BY ' . implode(', ', $parts);
+    }
+
+    private function qi(string $name): string
+    {
+        return $this->conn->dialect()->quoteIdentifier($name);
     }
 
     private function buildLimit(): string

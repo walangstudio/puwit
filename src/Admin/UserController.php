@@ -24,6 +24,8 @@ class UserController
         return Response::ok($rows);
     }
 
+    private const VALID_SCOPES = ['read', 'write', 'admin'];
+
     public function create(Request $request): Response
     {
         $username = trim($request->body('username', ''));
@@ -33,11 +35,19 @@ class UserController
         if (empty($username)) {
             return Response::error('username is required', 422);
         }
+        if (!preg_match('/^[a-zA-Z0-9_\-\.]{1,100}$/', $username)) {
+            return Response::error('username may only contain letters, digits, underscores, hyphens, and dots (max 100 chars)', 422);
+        }
         if (strlen($password) < 8) {
             return Response::error('password must be at least 8 characters', 422);
         }
         if (!is_array($scopes)) {
             return Response::error('scopes must be an array', 422);
+        }
+        foreach ($scopes as $scope) {
+            if (!in_array($scope, self::VALID_SCOPES, true)) {
+                return Response::error("Invalid scope '{$scope}'", 422);
+            }
         }
 
         $exists = $this->conn->selectOne(
@@ -98,8 +108,17 @@ class UserController
             $bindings[] = password_hash($pass, PASSWORD_BCRYPT);
         }
         if ($request->body('scopes') !== null) {
+            $scopes = $request->body('scopes');
+            if (!is_array($scopes)) {
+                return Response::error('scopes must be an array', 422);
+            }
+            foreach ($scopes as $scope) {
+                if (!in_array($scope, self::VALID_SCOPES, true)) {
+                    return Response::error("Invalid scope '{$scope}'", 422);
+                }
+            }
             $sets[]     = 'scopes = ?';
-            $bindings[] = json_encode($request->body('scopes'));
+            $bindings[] = json_encode($scopes);
         }
         if ($request->body('active') !== null) {
             $sets[]     = 'active = ?';
@@ -155,7 +174,8 @@ class UserController
             [$username]
         );
 
-        if ($user === null || !password_verify($password, $user['password_hash'])) {
+        $hash = $user['password_hash'] ?? '$2y$10$invalidsaltpaddingtopreventimenumeration0000000000000';
+        if ($user === null || !password_verify($password, $hash)) {
             return Response::unauthorized('Invalid credentials');
         }
 

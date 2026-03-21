@@ -21,4 +21,6 @@ interface DialectInterface
     public function placeholder(int $index): string;
 
     public function limitOffset(int $limit, int $offset): string;
+
+    public function quoteIdentifier(string $name): string;
 }

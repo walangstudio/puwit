@@ -20,10 +20,15 @@ class CorsMiddleware implements MiddlewareInterface
 
         $response = $next($request);
 
-        return $response
+        $response = $response
             ->withHeader('Access-Control-Allow-Origin', $origins)
-            ->withHeader('Access-Control-Allow-Credentials', 'true')
             ->withHeader('Access-Control-Expose-Headers', 'X-Total-Count');
+
+        if ($origins !== '*') {
+            $response = $response->withHeader('Access-Control-Allow-Credentials', 'true');
+        }
+
+        return $response;
     }
 
     private function preflight(string $origins): Response

@@ -15,8 +15,8 @@ class ModelValidator
 
         if (empty($data['name'])) {
             $errors[] = 'name is required';
-        } elseif (!preg_match('/^[a-zA-Z][a-zA-Z0-9_]{0,99}$/', $data['name'])) {
-            $errors[] = 'name must start with a letter and contain only alphanumerics/underscores (max 100 chars)';
+        } elseif (!preg_match('/^[a-z][a-z0-9_]{0,99}$/', $data['name'])) {
+            $errors[] = 'name must start with a lowercase letter and contain only lowercase alphanumerics/underscores (max 100 chars)';
         }
 
         if (!isset($data['fields']) || !is_array($data['fields'])) {
@@ -37,8 +37,8 @@ class ModelValidator
                 continue;
             }
 
-            if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_]{0,99}$/', $field['name'])) {
-                $errors[] = "{$prefix}.name '{$field['name']}' is invalid";
+            if (!preg_match('/^[a-z][a-z0-9_]{0,99}$/', $field['name'])) {
+                $errors[] = "{$prefix}.name '{$field['name']}' must start with a lowercase letter and contain only lowercase alphanumerics/underscores";
             }
 
             if (in_array($field['name'], self::RESERVED, true)) {
@@ -59,8 +59,31 @@ class ModelValidator
             if (($field['type'] ?? '') === 'relation' && empty($field['relation'])) {
                 $errors[] = "{$prefix}.relation must specify the related model name when type is 'relation'";
             }
+
+            if (isset($field['default']) && isset($field['type'])) {
+                $typeError = $this->validateDefaultType($field['type'], $field['default']);
+                if ($typeError !== null) {
+                    $errors[] = "{$prefix}.default {$typeError}";
+                }
+            }
         }
 
         return $errors;
+    }
+
+    private function validateDefaultType(string $type, mixed $value): ?string
+    {
+        return match ($type) {
+            'int', 'relation' => filter_var($value, FILTER_VALIDATE_INT) === false
+                ? "must be an integer for type '{$type}'"
+                : null,
+            'float' => !is_numeric($value)
+                ? "must be numeric for type 'float'"
+                : null,
+            'boolean' => !is_bool($value) && !in_array($value, [0, 1, '0', '1'], true)
+                ? "must be boolean (true/false/0/1) for type 'boolean'"
+                : null,
+            default => null,
+        };
     }
 }

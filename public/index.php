@@ -8,5 +8,11 @@ require PUWIT_ROOT . '/vendor/autoload.php';
 
 use Puwit\Kernel;
 
-$kernel = new Kernel();
-$kernel->handle();
+try {
+    $kernel = new Kernel();
+    $kernel->handle();
+} catch (\Throwable $e) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Internal server error']);
+}

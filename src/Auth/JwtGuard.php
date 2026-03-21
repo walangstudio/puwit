@@ -26,6 +26,10 @@ class JwtGuard
             return null;
         }
 
+        if (($payload->iss ?? null) !== 'puwit') {
+            return null;
+        }
+
         $jti = $payload->jti ?? null;
         if ($jti !== null && $this->isBlocklisted($jti)) {
             return null;
@@ -44,6 +48,12 @@ class JwtGuard
     public function issue(int $userId, array $scopes): string
     {
         $secret = Config::get('JWT_SECRET', '');
+        if ($secret === '') {
+            throw new \RuntimeException('JWT_SECRET is not configured');
+        }
+        if (strlen($secret) < 32) {
+            throw new \RuntimeException('JWT_SECRET must be at least 32 characters (256 bits) for HS256');
+        }
         $ttl    = Config::int('JWT_TTL', 3600);
         $now    = time();
         $jti    = bin2hex(random_bytes(16));
@@ -75,6 +85,11 @@ class JwtGuard
         if ($jti === null) {
             return;
         }
+
+        $this->conn->affectingStatement(
+            "DELETE FROM puwit_jwt_blocklist WHERE expires_at < ?",
+            [date('Y-m-d H:i:s')]
+        );
 
         try {
             $this->conn->statement(

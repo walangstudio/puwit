@@ -17,26 +17,37 @@ class Config
             return;
         }
 
+        self::$loaded = true;
+
+        if (!defined('PUWIT_ROOT')) {
+            return;
+        }
+
         $dotenv = Dotenv::createImmutable(PUWIT_ROOT);
         $dotenv->safeLoad();
-
-        self::$loaded = true;
     }
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        self::load();
-
         if (array_key_exists($key, self::$data)) {
             return self::$data[$key];
         }
 
-        return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: $default;
+        self::load();
+
+        $env = getenv($key);
+        return $_ENV[$key] ?? $_SERVER[$key] ?? ($env !== false ? $env : $default);
     }
 
     public static function set(string $key, mixed $value): void
     {
         self::$data[$key] = $value;
+    }
+
+    public static function reset(): void
+    {
+        self::$data   = [];
+        self::$loaded = false;
     }
 
     public static function bool(string $key, bool $default = false): bool

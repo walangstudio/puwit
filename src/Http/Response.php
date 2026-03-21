@@ -68,6 +68,11 @@ class Response
         return $this->status;
     }
 
+    public function body(): mixed
+    {
+        return $this->body;
+    }
+
     public function withStatus(int $status): self
     {
         $clone = clone $this;
@@ -96,7 +101,12 @@ class Response
         }
 
         if ($this->body !== null) {
-            echo json_encode($this->body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            try {
+                echo json_encode($this->body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                http_response_code(500);
+                echo json_encode(['error' => 'Response serialization failed']);
+            }
         }
     }
 }

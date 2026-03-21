@@ -8,13 +8,14 @@ use Puwit\Database\Connection;
 
 class ModelRegistry
 {
-    private array $cache = [];
+    private array $cache  = [];
+    private bool  $loaded = false;
 
     public function __construct(private readonly Connection $conn) {}
 
     public function all(): array
     {
-        if (!empty($this->cache)) {
+        if ($this->loaded) {
             return $this->cache;
         }
 
@@ -24,6 +25,7 @@ class ModelRegistry
             $this->cache[$def->name] = $def;
         }
 
+        $this->loaded = true;
         return $this->cache;
     }
 
@@ -86,8 +88,4 @@ class ModelRegistry
         unset($this->cache[$name]);
     }
 
-    public function invalidate(string $name): void
-    {
-        unset($this->cache[$name]);
-    }
 }
