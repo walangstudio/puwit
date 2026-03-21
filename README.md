@@ -4,7 +4,7 @@
 
 **PHP Universal Web Integration Toolkit**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 [![Composer](https://img.shields.io/badge/Composer-PSR--4-F28D1A?style=flat-square&logo=composer&logoColor=white)](https://getcomposer.org)
@@ -217,10 +217,10 @@ Set a field's type to `relation` and point it at another model:
 }
 ```
 
-A real foreign key is added to the table. To include the related record in the response, pass `?with=` the field name:
+A real foreign key is added to the table. To include the related record in the response, pass `?with=` the relation name (without `_id`):
 
 ```bash
-curl "https://yourdomain.com/api/review/1?with=product_id" -H "X-API-Key: a1b2c3..."
+curl "https://yourdomain.com/api/review/1?with=product" -H "X-API-Key: a1b2c3..."
 ```
 
 ```json
@@ -230,7 +230,7 @@ curl "https://yourdomain.com/api/review/1?with=product_id" -H "X-API-Key: a1b2c3
     "body": "Great widget",
     "rating": 5,
     "product_id": 1,
-    "product_id_data": {
+    "product": {
       "id": 1,
       "title": "Widget",
       "price": "9.9900"
@@ -311,7 +311,7 @@ There are three scopes and they stack:
 | PATCH | `/admin/users/{id}` | admin |
 | DELETE | `/admin/users/{id}` | admin |
 | POST | `/admin/users/login` | public |
-| POST | `/admin/users/logout` | public |
+| POST | `/admin/users/logout` | authenticated (any scope) |
 
 **CRUD (per model)**
 
@@ -333,7 +333,7 @@ Query parameters for list endpoints:
 | `sort` | id | any column |
 | `order` | asc | asc or desc |
 | `filter[field]` | | exact match |
-| `with` | | comma-separated relation fields to inline |
+| `with` | | comma-separated relation names to inline (e.g. `?with=product,category`) |
 
 ### Response format
 
@@ -398,7 +398,9 @@ puwit/
 │       ├── ModelController.php
 │       ├── ApiKeyController.php
 │       └── UserController.php
-└── tests/Unit/
+└── tests/
+    ├── Unit/
+    └── Integration/
 ```
 
 ---
@@ -426,13 +428,26 @@ User-created tables are prefixed `puwit_m_`.
 
 ---
 
+## Intended use
+
+PUWIT is designed for **personal projects and small internal tools** where you control all API consumers. It is not suitable for:
+
+- **Multi-tenant applications** — there is no row-level ownership. Any client with `write` scope can edit or delete any record, regardless of who created it.
+- **Public-facing user-generated content** — PUWIT has no concept of end-user identity tied to records. `puwit_users` is for admin accounts only, not application end users.
+- **Fine-grained access control** — scopes are global (`read`/`write`/`admin`). There is no per-model, per-record, or per-user permission system.
+
+If you need any of the above, put a backend in front of PUWIT that enforces your ownership and access rules, and use PUWIT purely as the data layer.
+
+---
+
 ## Security notes
 
 - `JWT_SECRET` must be at least 32 characters. firebase/php-jwt will reject shorter keys.
 - Remove `PUWIT_ADMIN_KEY` from `.env` once you have a real admin key in the database.
 - Set `APP_DEBUG=false` in production. When debug is on, stack traces are included in error responses.
 - Run over HTTPS in production. Both API keys and JWTs are bearer credentials and should not travel over plain HTTP.
-- The `puwit_jwt_blocklist` table grows over time. Periodically delete rows where `expires_at < NOW()`.
+- Model names and field names must be lowercase (`/^[a-z][a-z0-9_]+$/`). This prevents case-insensitive column collisions on MySQL.
+- The `puwit_jwt_blocklist` table is pruned automatically on every logout call (expired entries are deleted before the new one is inserted).
 
 ---
 

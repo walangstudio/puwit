@@ -47,9 +47,9 @@ class Connection
         return $this->pdo->lastInsertId();
     }
 
-    public function statement(string $sql, array $bindings = []): bool
+    public function statement(string $sql, array $bindings = []): void
     {
-        return $this->query($sql, $bindings)->rowCount() >= 0;
+        $this->query($sql, $bindings);
     }
 
     public function affectingStatement(string $sql, array $bindings = []): int
@@ -59,6 +59,10 @@ class Connection
 
     public function transaction(callable $callback): mixed
     {
+        if ($this->pdo->inTransaction()) {
+            return $callback($this);
+        }
+
         $this->pdo->beginTransaction();
         try {
             $result = $callback($this);

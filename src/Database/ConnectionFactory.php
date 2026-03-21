@@ -62,6 +62,7 @@ class ConnectionFactory
         $pdo = new \PDO($dsn, $user, $pass, [
             \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
 
         return [$pdo, new PostgresDialect()];
@@ -69,7 +70,8 @@ class ConnectionFactory
 
     private static function sqlite(): array
     {
-        $path = Config::get('DB_PATH', PUWIT_ROOT . '/storage/database.sqlite');
+        $default = defined('PUWIT_ROOT') ? PUWIT_ROOT . '/storage/database.sqlite' : ':memory:';
+        $path    = Config::get('DB_PATH', $default);
         $pdo = new \PDO("sqlite:{$path}", null, null, [
             \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,

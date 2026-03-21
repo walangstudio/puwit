@@ -8,7 +8,8 @@ class Request
 {
     private array $body;
     private array $query;
-    private array $params = [];
+    private array $params     = [];
+    private array $attributes = [];
 
     public function __construct(
         private readonly string $method,
@@ -25,7 +26,8 @@ class Request
     {
         $method  = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
         $uri     = $_SERVER['REQUEST_URI'] ?? '/';
-        $path    = parse_url($uri, PHP_URL_PATH) ?: '/';
+        $parsed  = parse_url($uri, PHP_URL_PATH) ?: '/';
+        $path    = $parsed === '/' ? '/' : rtrim($parsed, '/');
         $headers = self::extractHeaders();
         $query   = $_GET;
 
@@ -35,6 +37,9 @@ class Request
 
         if (str_contains($contentType, 'application/json') && $raw !== '') {
             $decoded = json_decode($raw, true);
+            if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+                throw new \InvalidArgumentException('Malformed JSON: ' . json_last_error_msg());
+            }
             if (is_array($decoded)) {
                 $body = $decoded;
             }
@@ -102,14 +107,8 @@ class Request
 
     public function withParams(array $params): self
     {
-        $clone = clone $this;
-        // preserve __attr_* keys set by middleware
-        $attrs = array_filter(
-            $clone->params,
-            fn($k) => str_starts_with($k, '__attr_'),
-            ARRAY_FILTER_USE_KEY
-        );
-        $clone->params = array_merge($attrs, $params);
+        $clone         = clone $this;
+        $clone->params = $params;
         return $clone;
     }
 
@@ -134,13 +133,13 @@ class Request
 
     public function getAttribute(string $key, mixed $default = null): mixed
     {
-        return $this->params['__attr_' . $key] ?? $default;
+        return $this->attributes[$key] ?? $default;
     }
 
     public function withAttribute(string $key, mixed $value): self
     {
-        $clone = clone $this;
-        $clone->params['__attr_' . $key] = $value;
+        $clone                    = clone $this;
+        $clone->attributes[$key]  = $value;
         return $clone;
     }
 }

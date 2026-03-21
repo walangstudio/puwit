@@ -66,6 +66,16 @@ class ModelValidatorTest extends TestCase
         $this->assertStringContainsString('relation', $errors[0]);
     }
 
+    public function testUppercaseModelNameRejected(): void
+    {
+        $errors = $this->validator->validate([
+            'name'   => 'Product',
+            'fields' => [['name' => 'title', 'type' => 'string']],
+        ]);
+        $this->assertNotEmpty($errors);
+        $this->assertStringContainsString('lowercase', $errors[0]);
+    }
+
     public function testDuplicateFieldName(): void
     {
         $errors = $this->validator->validate([

@@ -45,7 +45,10 @@ class SQLiteDialect implements DialectInterface
 
     public function foreignKey(string $column, string $refTable, string $refColumn = 'id'): string
     {
-        return "FOREIGN KEY ({$column}) REFERENCES {$refTable}({$refColumn}) ON DELETE RESTRICT ON UPDATE CASCADE";
+        $qc  = $this->quoteIdentifier($column);
+        $qt  = $this->quoteIdentifier($refTable);
+        $qrc = $this->quoteIdentifier($refColumn);
+        return "FOREIGN KEY ({$qc}) REFERENCES {$qt}({$qrc}) ON DELETE RESTRICT ON UPDATE CASCADE";
     }
 
     public function placeholder(int $index): string
@@ -56,5 +59,10 @@ class SQLiteDialect implements DialectInterface
     public function limitOffset(int $limit, int $offset): string
     {
         return "LIMIT {$limit} OFFSET {$offset}";
+    }
+
+    public function quoteIdentifier(string $name): string
+    {
+        return '"' . str_replace('"', '""', $name) . '"';
     }
 }

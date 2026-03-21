@@ -12,10 +12,6 @@ class SystemMigration
 
     public function run(): void
     {
-        if ($this->conn->tableExists('puwit_models')) {
-            return;
-        }
-
         $this->conn->transaction(function (Connection $conn) {
             $this->createModelsTable($conn);
             $this->createApiKeysTable($conn);
@@ -30,7 +26,7 @@ class SystemMigration
         $ts = $conn->dialect()->timestampDefault();
 
         $conn->statement("
-            CREATE TABLE puwit_models (
+            CREATE TABLE IF NOT EXISTS puwit_models (
                 id          {$pk},
                 name        VARCHAR(100) NOT NULL UNIQUE,
                 table_name  VARCHAR(150) NOT NULL UNIQUE,
@@ -48,7 +44,7 @@ class SystemMigration
         $ts = $conn->dialect()->timestampDefault();
 
         $conn->statement("
-            CREATE TABLE puwit_api_keys (
+            CREATE TABLE IF NOT EXISTS puwit_api_keys (
                 id          {$pk},
                 label       VARCHAR(100) NOT NULL,
                 key_hash    VARCHAR(64) NOT NULL UNIQUE,
@@ -67,7 +63,7 @@ class SystemMigration
         $ts = $conn->dialect()->timestampDefault();
 
         $conn->statement("
-            CREATE TABLE puwit_users (
+            CREATE TABLE IF NOT EXISTS puwit_users (
                 id            {$pk},
                 username      VARCHAR(100) NOT NULL UNIQUE,
                 password_hash VARCHAR(255) NOT NULL,
@@ -84,7 +80,7 @@ class SystemMigration
         $pk = $conn->dialect()->autoIncrementPrimaryKey();
 
         $conn->statement("
-            CREATE TABLE puwit_jwt_blocklist (
+            CREATE TABLE IF NOT EXISTS puwit_jwt_blocklist (
                 id         {$pk},
                 jti        VARCHAR(36) NOT NULL UNIQUE,
                 expires_at TEXT NOT NULL

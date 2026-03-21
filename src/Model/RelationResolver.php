@@ -47,8 +47,9 @@ class RelationResolver
         }
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $qt      = $this->conn->dialect()->quoteIdentifier($relatedModel->tableName);
         $related = $this->conn->select(
-            "SELECT * FROM {$relatedModel->tableName} WHERE id IN ({$placeholders})",
+            "SELECT * FROM {$qt} WHERE id IN ({$placeholders})",
             array_values($ids)
         );
 

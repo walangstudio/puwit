@@ -67,15 +67,16 @@ class Kernel
 
     public function handle(): void
     {
-        $request = Request::fromGlobals();
+        $this->process(Request::fromGlobals())->send();
+    }
 
+    public function process(Request $request): Response
+    {
         try {
-            $response = $this->dispatch($request);
+            return $this->dispatch($request);
         } catch (\Throwable $e) {
-            $response = $this->handleException($e);
+            return $this->handleException($e);
         }
-
-        $response->send();
     }
 
     public function pushMiddleware(\Puwit\Middleware\MiddlewareInterface $middleware): void
@@ -85,6 +86,10 @@ class Kernel
 
     private function dispatch(Request $request): Response
     {
+        if ($request->method() === 'OPTIONS') {
+            return $this->pipeline->run($request, fn($req) => Response::json(null, 204));
+        }
+
         $match = $this->router->dispatch($request);
 
         if ($match === null) {
@@ -102,6 +107,10 @@ class Kernel
 
     private function handleException(\Throwable $e): Response
     {
+        if ($e instanceof \InvalidArgumentException) {
+            return Response::error($e->getMessage(), 400);
+        }
+
         if (Config::bool('APP_DEBUG', false)) {
             return Response::error($e->getMessage(), 500, [
                 'exception' => get_class($e),

@@ -110,6 +110,11 @@ class ModelController
             relations: $updated->relations,
         );
 
+        $alterErrors = $this->schema->alterTable($def, $updated);
+        if (!empty($alterErrors)) {
+            return Response::error('Validation failed', 422, ['errors' => $alterErrors]);
+        }
+
         $this->registry->update($updated);
 
         return Response::ok($updated->toArray(), ['model' => 'model']);
@@ -124,8 +129,8 @@ class ModelController
             return Response::notFound("Model '{$name}' not found");
         }
 
-        $this->schema->dropTable($def);
         $this->registry->delete($name);
+        $this->schema->dropTable($def);
 
         return Response::noContent();
     }

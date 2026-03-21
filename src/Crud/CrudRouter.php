@@ -26,14 +26,23 @@ class CrudRouter
 
     public function register(ModelDefinition $model): void
     {
-        $name    = $model->name;
-        $handler = $this->handler;
+        $name     = $model->name;
+        $handler  = $this->handler;
+        $registry = $this->registry;
 
-        $this->router->add('GET', "/api/{$name}", fn(Request $req) => $handler->index($req, $model));
-        $this->router->add('POST', "/api/{$name}", fn(Request $req) => $handler->create($req, $model));
-        $this->router->add('GET', "/api/{$name}/{id}", fn(Request $req) => $handler->show($req, $model, (int)$req->param('id')));
-        $this->router->add('PUT', "/api/{$name}/{id}", fn(Request $req) => $handler->replace($req, $model, (int)$req->param('id')));
-        $this->router->add('PATCH', "/api/{$name}/{id}", fn(Request $req) => $handler->partialUpdate($req, $model, (int)$req->param('id')));
-        $this->router->add('DELETE', "/api/{$name}/{id}", fn(Request $req) => $handler->destroy($req, $model, (int)$req->param('id')));
+        $resolve = function () use ($registry, $name): ModelDefinition {
+            $def = $registry->find($name);
+            if ($def === null) {
+                throw new \RuntimeException("Model '{$name}' not found");
+            }
+            return $def;
+        };
+
+        $this->router->add('GET',    "/api/{$name}",       fn(Request $req) => $handler->index($req, $resolve()));
+        $this->router->add('POST',   "/api/{$name}",       fn(Request $req) => $handler->create($req, $resolve()));
+        $this->router->add('GET',    "/api/{$name}/{id}",  fn(Request $req) => $handler->show($req, $resolve(), (int)$req->param('id')));
+        $this->router->add('PUT',    "/api/{$name}/{id}",  fn(Request $req) => $handler->replace($req, $resolve(), (int)$req->param('id')));
+        $this->router->add('PATCH',  "/api/{$name}/{id}",  fn(Request $req) => $handler->partialUpdate($req, $resolve(), (int)$req->param('id')));
+        $this->router->add('DELETE', "/api/{$name}/{id}",  fn(Request $req) => $handler->destroy($req, $resolve(), (int)$req->param('id')));
     }
 }
