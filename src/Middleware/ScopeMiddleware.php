@@ -13,6 +13,8 @@ class ScopeMiddleware implements MiddlewareInterface
     private const PUBLIC_ROUTES = [
         'POST /admin/users/login',
         'POST /admin/users/logout',
+        'GET /openapi.json',
+        'GET /docs',
     ];
 
     public function process(Request $request, callable $next): Response

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Puwit;
 
 use Puwit\Admin\ApiKeyController;
+use Puwit\Admin\DocsController;
 use Puwit\Admin\ModelController;
 use Puwit\Admin\UserController;
 use Puwit\Auth\ApiKeyGuard;
@@ -15,6 +16,7 @@ use Puwit\Crud\CrudRouter;
 use Puwit\Database\ConnectionFactory;
 use Puwit\Database\Migrations\SystemMigration;
 use Puwit\Database\SchemaBuilder;
+use Puwit\Http\OpenApiGenerator;
 use Puwit\Http\Request;
 use Puwit\Http\Response;
 use Puwit\Http\Router;
@@ -57,6 +59,13 @@ class Kernel
         $userCtrl   = new UserController($conn, $jwtGuard);
 
         $this->registerAdminRoutes($modelCtrl, $apiKeyCtrl, $userCtrl);
+
+        if (Config::bool('API_DOCS', false)) {
+            $generator = new OpenApiGenerator($registry);
+            $docs = new DocsController($generator);
+            $this->router->add('GET', '/openapi.json', [$docs, 'openapi']);
+            $this->router->add('GET', '/docs',          [$docs, 'docs']);
+        }
 
         $this->pipeline = new Pipeline();
         $this->pipeline

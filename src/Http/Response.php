@@ -7,6 +7,7 @@ namespace Puwit\Http;
 class Response
 {
     private array $headers;
+    private bool $raw = false;
 
     public function __construct(
         private int    $status,
@@ -14,6 +15,13 @@ class Response
         array $headers = [],
     ) {
         $this->headers = $headers;
+    }
+
+    public static function html(string $content): self
+    {
+        $response = new self(200, $content, ['Content-Type' => 'text/html; charset=utf-8']);
+        $response->raw = true;
+        return $response;
     }
 
     public static function json(mixed $data, int $status = 200, array $headers = []): self
@@ -101,11 +109,15 @@ class Response
         }
 
         if ($this->body !== null) {
-            try {
-                echo json_encode($this->body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-            } catch (\JsonException $e) {
-                http_response_code(500);
-                echo json_encode(['error' => 'Response serialization failed']);
+            if ($this->raw) {
+                echo $this->body;
+            } else {
+                try {
+                    echo json_encode($this->body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+                } catch (\JsonException $e) {
+                    http_response_code(500);
+                    echo json_encode(['error' => 'Response serialization failed']);
+                }
             }
         }
     }
