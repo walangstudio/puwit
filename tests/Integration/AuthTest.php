@@ -318,4 +318,31 @@ class AuthTest extends BaseIntegrationTest
         $res = $this->apiKey('GET', '/admin/models', $key);
         $this->assertEquals(403, $res['status']);
     }
+
+    public function testPublicModelGetRequiresNoAuth(): void
+    {
+        $this->admin('POST', '/admin/models', [
+            'name' => 'pub', 'fields' => [['name' => 'title', 'type' => 'string', 'nullable' => false]], 'public' => true
+        ]);
+        $res = $this->request('GET', '/api/pub');
+        $this->assertSame(200, $res['status']);
+    }
+
+    public function testPublicModelPostStillRequiresAuth(): void
+    {
+        $this->admin('POST', '/admin/models', [
+            'name' => 'pubwrite', 'fields' => [['name' => 'title', 'type' => 'string', 'nullable' => false]], 'public' => true
+        ]);
+        $res = $this->request('POST', '/api/pubwrite', ['title' => 'x']);
+        $this->assertSame(401, $res['status']);
+    }
+
+    public function testPrivateModelRequiresAuth(): void
+    {
+        $this->admin('POST', '/admin/models', [
+            'name' => 'priv', 'fields' => [['name' => 'title', 'type' => 'string', 'nullable' => false]], 'public' => false
+        ]);
+        $res = $this->request('GET', '/api/priv');
+        $this->assertSame(401, $res['status']);
+    }
 }

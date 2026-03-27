@@ -52,12 +52,13 @@ class ModelRegistry
     public function persist(ModelDefinition $definition): void
     {
         $this->conn->insert(
-            "INSERT INTO puwit_models (name, table_name, fields, relations) VALUES (?, ?, ?, ?)",
+            "INSERT INTO puwit_models (name, table_name, fields, relations, is_public) VALUES (?, ?, ?, ?, ?)",
             [
                 $definition->name,
                 $definition->tableName,
                 json_encode(array_map(fn($f) => $f->toArray(), $definition->fields)),
                 json_encode($definition->relations),
+                (int)$definition->isPublic,
             ]
         );
 
@@ -67,10 +68,11 @@ class ModelRegistry
     public function update(ModelDefinition $definition): void
     {
         $this->conn->affectingStatement(
-            "UPDATE puwit_models SET fields = ?, relations = ?, updated_at = ? WHERE name = ?",
+            "UPDATE puwit_models SET fields = ?, relations = ?, is_public = ?, updated_at = ? WHERE name = ?",
             [
                 json_encode(array_map(fn($f) => $f->toArray(), $definition->fields)),
                 json_encode($definition->relations),
+                (int)$definition->isPublic,
                 date('Y-m-d H:i:s'),
                 $definition->name,
             ]

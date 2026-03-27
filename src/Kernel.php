@@ -70,7 +70,7 @@ class Kernel
         $this->pipeline = new Pipeline();
         $this->pipeline
             ->pipe(new CorsMiddleware())
-            ->pipe(new AuthMiddleware($apiKeyGuard, $jwtGuard))
+            ->pipe(new AuthMiddleware($apiKeyGuard, $jwtGuard, $registry))
             ->pipe(new ScopeMiddleware());
     }
 

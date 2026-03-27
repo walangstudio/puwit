@@ -18,6 +18,16 @@ class SystemMigration
             $this->createUsersTable($conn);
             $this->createJwtBlocklistTable($conn);
         });
+        $this->addIsPublicColumn();
+    }
+
+    private function addIsPublicColumn(): void
+    {
+        if (!$this->conn->columnExists('puwit_models', 'is_public')) {
+            $this->conn->statement(
+                'ALTER TABLE puwit_models ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0'
+            );
+        }
     }
 
     private function createModelsTable(Connection $conn): void
@@ -32,6 +42,7 @@ class SystemMigration
                 table_name  VARCHAR(150) NOT NULL UNIQUE,
                 fields      TEXT NOT NULL,
                 relations   TEXT NOT NULL DEFAULT '[]',
+                is_public   INTEGER NOT NULL DEFAULT 0,
                 created_at  {$ts},
                 updated_at  {$ts}
             )
