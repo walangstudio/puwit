@@ -247,4 +247,23 @@ class ModelLifecycleTest extends BaseIntegrationTest
         $res = $this->admin('DELETE', '/admin/models/ghost');
         $this->assertEquals(404, $res['status']);
     }
+
+    public function testCreateModelWithPublicFlag(): void
+    {
+        $res = $this->admin('POST', '/admin/models', [
+            'name' => 'flagged', 'fields' => [['name' => 'body', 'type' => 'text', 'nullable' => false]], 'public' => true
+        ]);
+        $this->assertSame(201, $res['status']);
+        $this->assertTrue($res['body']['data']['public']);
+    }
+
+    public function testPatchModelPublicFlag(): void
+    {
+        $this->admin('POST', '/admin/models', [
+            'name' => 'toggleme', 'fields' => [['name' => 'body', 'type' => 'text', 'nullable' => false]]
+        ]);
+        $res = $this->admin('PATCH', '/admin/models/toggleme', ['public' => true]);
+        $this->assertSame(200, $res['status']);
+        $this->assertTrue($res['body']['data']['public']);
+    }
 }
