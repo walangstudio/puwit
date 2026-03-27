@@ -428,6 +428,17 @@ User-created tables are prefixed `puwit_m_`.
 
 ---
 
+## API docs
+
+Set `API_DOCS=true` in `.env` to enable:
+
+- `GET /openapi.json` — live OpenAPI 3.1 spec, generated from registered models
+- `GET /docs` — Scalar UI (loads from CDN, no build step)
+
+Disabled by default. Do not enable in production unless the spec is intentionally public.
+
+---
+
 ## Intended use
 
 PUWIT is designed for **personal projects and small internal tools** where you control all API consumers. It is not suitable for:

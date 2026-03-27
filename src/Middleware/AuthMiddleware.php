@@ -18,6 +18,8 @@ class AuthMiddleware implements MiddlewareInterface
 
     private const PUBLIC_ROUTES = [
         'POST /admin/users/login',
+        'GET /openapi.json',
+        'GET /docs',
     ];
 
     public function process(Request $request, callable $next): Response
