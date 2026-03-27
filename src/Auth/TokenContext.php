@@ -8,7 +8,7 @@ class TokenContext
 {
     public function __construct(
         public readonly string $type,
-        public readonly string|int $id,
+        public readonly string|int|null $id,
         public readonly array $scopes,
     ) {}
 

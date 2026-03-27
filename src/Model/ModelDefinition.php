@@ -12,6 +12,7 @@ class ModelDefinition
         public readonly string $tableName,
         public readonly array  $fields,
         public readonly array  $relations = [],
+        public readonly bool   $isPublic  = false,
     ) {}
 
     public static function fromArray(array $data): self
@@ -28,6 +29,7 @@ class ModelDefinition
             tableName: $table,
             fields:    $fields,
             relations: $data['relations'] ?? [],
+            isPublic:  (bool)($data['public'] ?? false),
         );
     }
 
@@ -41,6 +43,7 @@ class ModelDefinition
             tableName: $row['table_name'],
             fields:    array_map(fn($f) => FieldDefinition::fromArray($f), $fields),
             relations: $relations,
+            isPublic:  (bool)($row['is_public'] ?? false),
         );
     }
 
@@ -51,6 +54,7 @@ class ModelDefinition
             'table_name' => $this->tableName,
             'fields'     => array_map(fn($f) => $f->toArray(), $this->fields),
             'relations'  => $this->relations,
+            'public'     => $this->isPublic,
         ];
     }
 
