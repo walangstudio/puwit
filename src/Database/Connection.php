@@ -78,4 +78,9 @@ class Connection
     {
         return $this->dialect->tableExists($this, $table);
     }
+
+    public function columnExists(string $table, string $column): bool
+    {
+        return $this->dialect->columnExists($this, $table, $column);
+    }
 }

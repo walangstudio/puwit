@@ -23,4 +23,6 @@ interface DialectInterface
     public function limitOffset(int $limit, int $offset): string;
 
     public function quoteIdentifier(string $name): string;
+
+    public function columnExists(Connection $conn, string $table, string $column): bool;
 }

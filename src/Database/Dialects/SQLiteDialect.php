@@ -65,4 +65,13 @@ class SQLiteDialect implements DialectInterface
     {
         return '"' . str_replace('"', '""', $name) . '"';
     }
+
+    public function columnExists(Connection $conn, string $table, string $column): bool
+    {
+        $row = $conn->selectOne(
+            "SELECT COUNT(*) as cnt FROM pragma_table_info(?) WHERE name = ?",
+            [$table, $column]
+        );
+        return (int)($row['cnt'] ?? 0) > 0;
+    }
 }

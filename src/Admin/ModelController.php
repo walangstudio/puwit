@@ -95,6 +95,7 @@ class ModelController
                 ? array_map(fn($f) => is_array($f) ? $f : $f->toArray(), $body['fields'])
                 : array_map(fn($f) => $f->toArray(), $def->fields),
             'relations' => $body['relations'] ?? $def->relations,
+            'public'    => $body['public'] ?? $def->isPublic,
         ];
 
         $errors = $this->validator->validate($merged);
@@ -108,6 +109,7 @@ class ModelController
             tableName: $def->tableName,
             fields:    $updated->fields,
             relations: $updated->relations,
+            isPublic:  (bool)($body['public'] ?? $def->isPublic),
         );
 
         $alterErrors = $this->schema->alterTable($def, $updated);

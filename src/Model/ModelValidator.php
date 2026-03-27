@@ -19,6 +19,10 @@ class ModelValidator
             $errors[] = 'name must start with a lowercase letter and contain only lowercase alphanumerics/underscores (max 100 chars)';
         }
 
+        if (isset($data['public']) && !is_bool($data['public'])) {
+            $errors[] = 'public must be a boolean';
+        }
+
         if (!isset($data['fields']) || !is_array($data['fields'])) {
             $errors[] = 'fields must be an array';
             return $errors;
