@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0] - 2026-03-27
+
+### Added
+- Per-model `public` flag — set `"public": true` on a model to allow unauthenticated GET requests to its CRUD endpoints. Write operations always require auth.
+- `GET /openapi.json` — live OpenAPI 3.1 spec auto-generated from registered models. Gated behind `API_DOCS=true`.
+- `GET /docs` — Scalar API UI served from CDN, no build step or npm dependency. Gated behind `API_DOCS=true`.
+- `columnExists()` on `Connection` and all three dialects — used by `SystemMigration` to add new columns to existing databases without re-running migrations.
+
+### Fixed
+- `SystemMigration` adds `is_public` column to existing `puwit_models` tables on upgrade without requiring a manual migration.
+
+---
+
 ## [0.2.0] - 2026-03-21
 
 ### Added
