@@ -78,6 +78,26 @@ class CrudTest extends BaseIntegrationTest
         $this->assertNull($res['body']['data']['price']);
     }
 
+    public function testBooleanFalseStoredAsZeroNotEmptyString(): void
+    {
+        $res = $this->admin('POST', '/api/product', ['title' => 'Widget', 'active' => false]);
+        $this->assertEquals(201, $res['status']);
+        // PHP false must be coerced to int 0 before PDO binding, not empty string ''
+        $this->assertSame(0, $res['body']['data']['active']);
+    }
+
+    public function testBooleanFilterWorks(): void
+    {
+        $this->admin('POST', '/api/product', ['title' => 'Active',   'active' => true]);
+        $this->admin('POST', '/api/product', ['title' => 'Inactive', 'active' => false]);
+
+        $res = $this->admin('GET', '/api/product', [], ['filter' => ['active' => '0']]);
+        $this->assertEquals(200, $res['status']);
+        $titles = array_column($res['body']['data'], 'title');
+        $this->assertContains('Inactive', $titles);
+        $this->assertNotContains('Active', $titles);
+    }
+
     // -------------------------------------------------------------------------
     // List
     // -------------------------------------------------------------------------
@@ -164,6 +184,17 @@ class CrudTest extends BaseIntegrationTest
     {
         $res = $this->admin('PUT', '/api/product/9999', ['title' => 'Ghost']);
         $this->assertEquals(404, $res['status']);
+    }
+
+    public function testReplaceNullsOmittedNullableFields(): void
+    {
+        $id = $this->createRecord(['title' => 'Full', 'price' => 9.99, 'qty' => 5])['body']['data']['id'];
+
+        // PUT with only required fields — nullable fields should become null
+        $res = $this->admin('PUT', "/api/product/{$id}", ['title' => 'Slim']);
+        $this->assertEquals(200, $res['status']);
+        $this->assertNull($res['body']['data']['price']);
+        $this->assertNull($res['body']['data']['qty']);
     }
 
     // -------------------------------------------------------------------------

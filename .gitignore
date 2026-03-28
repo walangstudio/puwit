@@ -4,6 +4,7 @@
 
 # Environment
 /.env
+/e2e/.env.e2e
 /*.pem
 
 # IDE & tools

@@ -69,7 +69,7 @@ class PostgresDialect implements DialectInterface
     public function columnExists(Connection $conn, string $table, string $column): bool
     {
         $row = $conn->selectOne(
-            "SELECT COUNT(*) as cnt FROM information_schema.columns WHERE table_name = ? AND column_name = ?",
+            "SELECT COUNT(*) as cnt FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? AND column_name = ?",
             [$table, $column]
         );
         return (int)($row['cnt'] ?? 0) > 0;

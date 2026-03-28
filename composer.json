@@ -18,10 +18,12 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Puwit\\Tests\\": "tests/"
+            "Puwit\\Tests\\": "tests/",
+            "Puwit\\E2E\\":   "e2e/"
         }
     },
     "scripts": {
-        "test": "phpunit --testdox"
+        "test":     "phpunit --testdox",
+        "test:e2e": "phpunit -c phpunit.e2e.xml --testdox"
     }
 }

@@ -17,6 +17,7 @@ class SystemMigration
             $this->createApiKeysTable($conn);
             $this->createUsersTable($conn);
             $this->createJwtBlocklistTable($conn);
+            $this->createLoginAttemptsTable($conn);
         });
         $this->addIsPublicColumn();
     }
@@ -95,6 +96,19 @@ class SystemMigration
                 id         {$pk},
                 jti        VARCHAR(36) NOT NULL UNIQUE,
                 expires_at TEXT NOT NULL
+            )
+        ");
+    }
+
+    private function createLoginAttemptsTable(Connection $conn): void
+    {
+        $pk = $conn->dialect()->autoIncrementPrimaryKey();
+
+        $conn->statement("
+            CREATE TABLE IF NOT EXISTS puwit_login_attempts (
+                id           {$pk},
+                ip           VARCHAR(45) NOT NULL,
+                attempted_at TEXT NOT NULL
             )
         ");
     }
