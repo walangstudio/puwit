@@ -49,7 +49,14 @@ class AuthMiddleware implements MiddlewareInterface
         if ($apiKey !== null) {
             $context = $this->apiKeyGuard->validate($apiKey);
             if ($context !== null) {
-                return $next($request->withAttribute('token_context', $context));
+                $response = $next($request->withAttribute('token_context', $context));
+                if ($this->apiKeyGuard->bootstrapKeyUsed) {
+                    $response = $response->withHeader(
+                        'X-Puwit-Warning',
+                        'Bootstrap admin key is still active. Remove PUWIT_ADMIN_KEY from .env once real keys are created.'
+                    );
+                }
+                return $response;
             }
             return Response::unauthorized('Invalid or revoked API key');
         }

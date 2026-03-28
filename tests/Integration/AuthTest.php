@@ -345,4 +345,41 @@ class AuthTest extends BaseIntegrationTest
         $res = $this->request('GET', '/api/priv');
         $this->assertSame(401, $res['status']);
     }
+
+    // -------------------------------------------------------------------------
+    // Rate limiting
+    // -------------------------------------------------------------------------
+
+    public function testLoginRateLimitReturns429AfterTenFailures(): void
+    {
+        // clientIp() returns null in integration tests (no real HTTP), so rate limit
+        // is skipped. Simulate by using a Request with a clientIp set.
+        // We test the rate limit logic directly via repeated requests with a fake IP.
+        $request = new \Puwit\Http\Request('POST', '/admin/users/login', [], [], [
+            'username' => 'ghost',
+            'password' => 'wrongpassword',
+        ], '192.0.2.99');
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->kernel->process($request);
+        }
+
+        $res = $this->kernel->process($request);
+        $this->assertSame(429, $res->status());
+    }
+
+    // -------------------------------------------------------------------------
+    // Bootstrap key warning
+    // -------------------------------------------------------------------------
+
+    public function testBootstrapKeyReturnsWarningHeader(): void
+    {
+        $res = $this->request('GET', '/admin/models', [], ['x-api-key' => self::ADMIN_KEY]);
+        // Response::headers() used via body() proxy in BaseIntegrationTest — check via raw response object
+        $response = $this->kernel->process(
+            new \Puwit\Http\Request('GET', '/admin/models', ['x-api-key' => self::ADMIN_KEY], [], [])
+        );
+        $this->assertArrayHasKey('X-Puwit-Warning', $response->headers());
+        $this->assertStringContainsString('Bootstrap', $response->headers()['X-Puwit-Warning']);
+    }
 }

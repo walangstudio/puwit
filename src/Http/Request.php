@@ -12,11 +12,12 @@ class Request
     private array $attributes = [];
 
     public function __construct(
-        private readonly string $method,
-        private readonly string $path,
-        private readonly array  $headers,
+        private readonly string  $method,
+        private readonly string  $path,
+        private readonly array   $headers,
         array $query,
         array $body,
+        private readonly ?string $clientIp = null,
     ) {
         $this->query = $query;
         $this->body  = $body;
@@ -30,6 +31,11 @@ class Request
         $path    = $parsed === '/' ? '/' : rtrim($parsed, '/');
         $headers = self::extractHeaders();
         $query   = $_GET;
+
+        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
+        $clientIp  = $forwarded
+            ? trim(explode(',', $forwarded)[0])
+            : ($_SERVER['REMOTE_ADDR'] ?? null);
 
         $body = [];
         $contentType = $headers['content-type'] ?? '';
@@ -47,7 +53,12 @@ class Request
             $body = $_POST;
         }
 
-        return new self($method, $path, $headers, $query, $body);
+        return new self($method, $path, $headers, $query, $body, $clientIp);
+    }
+
+    public function clientIp(): ?string
+    {
+        return $this->clientIp;
     }
 
     private static function extractHeaders(): array

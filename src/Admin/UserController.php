@@ -162,6 +162,11 @@ class UserController
 
     public function login(Request $request): Response
     {
+        $ip = $request->clientIp();
+        if ($ip !== null && !$this->checkLoginRateLimit($ip)) {
+            return Response::error('Too many login attempts. Try again in a minute.', 429);
+        }
+
         $username = trim($request->body('username', ''));
         $password = $request->body('password', '');
 
@@ -176,6 +181,9 @@ class UserController
 
         $hash = $user['password_hash'] ?? '$2y$10$invalidsaltpaddingtopreventimenumeration0000000000000';
         if ($user === null || !password_verify($password, $hash)) {
+            if ($ip !== null) {
+                $this->recordLoginAttempt($ip);
+            }
             return Response::unauthorized('Invalid credentials');
         }
 
@@ -187,6 +195,30 @@ class UserController
         $token  = $this->jwtGuard->issue((int)$user['id'], $scopes);
 
         return Response::ok(['token' => $token, 'type' => 'Bearer']);
+    }
+
+    private function checkLoginRateLimit(string $ip): bool
+    {
+        $this->conn->affectingStatement(
+            "DELETE FROM puwit_login_attempts WHERE attempted_at < ?",
+            [date('Y-m-d H:i:s', time() - 600)]
+        );
+
+        $window = date('Y-m-d H:i:s', time() - 60);
+        $row = $this->conn->selectOne(
+            "SELECT COUNT(*) as cnt FROM puwit_login_attempts WHERE ip = ? AND attempted_at > ?",
+            [$ip, $window]
+        );
+
+        return (int)($row['cnt'] ?? 0) < 10;
+    }
+
+    private function recordLoginAttempt(string $ip): void
+    {
+        $this->conn->statement(
+            "INSERT INTO puwit_login_attempts (ip, attempted_at) VALUES (?, ?)",
+            [$ip, date('Y-m-d H:i:s')]
+        );
     }
 
     public function logout(Request $request): Response

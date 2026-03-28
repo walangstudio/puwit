@@ -12,31 +12,58 @@ class CorsMiddleware implements MiddlewareInterface
 {
     public function process(Request $request, callable $next): Response
     {
-        $origins = Config::get('CORS_ORIGINS', '*');
+        $configured = Config::get('CORS_ORIGINS', '*');
+        $origin     = $this->resolveOrigin($request, $configured);
 
         if ($request->method() === 'OPTIONS') {
-            return $this->preflight($origins);
+            return $this->preflight($origin, $configured);
         }
 
         $response = $next($request);
 
         $response = $response
-            ->withHeader('Access-Control-Allow-Origin', $origins)
+            ->withHeader('Access-Control-Allow-Origin', $origin)
             ->withHeader('Access-Control-Expose-Headers', 'X-Total-Count');
 
-        if ($origins !== '*') {
-            $response = $response->withHeader('Access-Control-Allow-Credentials', 'true');
+        if ($origin !== '*') {
+            $response = $response
+                ->withHeader('Access-Control-Allow-Credentials', 'true')
+                ->withHeader('Vary', 'Origin');
         }
 
         return $response;
     }
 
-    private function preflight(string $origins): Response
+    private function resolveOrigin(Request $request, string $configured): string
     {
-        return Response::json(null, 204)
-            ->withHeader('Access-Control-Allow-Origin', $origins)
+        if ($configured === '*') {
+            return '*';
+        }
+
+        $allowed       = array_map('trim', explode(',', $configured));
+        $requestOrigin = $request->header('origin', '');
+
+        if ($requestOrigin !== '' && in_array($requestOrigin, $allowed, true)) {
+            return $requestOrigin;
+        }
+
+        return $allowed[0];
+    }
+
+    private function preflight(string $origin, string $configured): Response
+    {
+        $response = Response::json(null, 204)
+            ->withHeader('Access-Control-Allow-Origin', $origin)
             ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
             ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key')
             ->withHeader('Access-Control-Max-Age', '86400');
+
+        if ($configured !== '*') {
+            $response = $response
+                ->withHeader('Access-Control-Allow-Credentials', 'true')
+                ->withHeader('Vary', 'Origin');
+        }
+
+        return $response;
     }
 }

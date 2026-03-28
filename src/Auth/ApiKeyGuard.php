@@ -11,10 +11,13 @@ class ApiKeyGuard
 {
     public function __construct(private readonly Connection $conn) {}
 
+    public bool $bootstrapKeyUsed = false;
+
     public function validate(string $key): ?TokenContext
     {
         $adminKey = Config::get('PUWIT_ADMIN_KEY', '');
         if ($adminKey !== '' && hash_equals($adminKey, $key)) {
+            $this->bootstrapKeyUsed = true;
             return new TokenContext('api_key', 'bootstrap', ['admin']);
         }
 

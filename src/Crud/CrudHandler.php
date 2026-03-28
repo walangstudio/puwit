@@ -70,6 +70,7 @@ class CrudHandler
             return Response::error('Validation failed', 422, ['errors' => $errors]);
         }
 
+        $data = $this->coerceTypes($data, $model);
         $data['created_at'] = date('Y-m-d H:i:s');
         $data['updated_at'] = date('Y-m-d H:i:s');
 
@@ -110,6 +111,15 @@ class CrudHandler
             return Response::error('Validation failed', 422, ['errors' => $errors]);
         }
 
+        $data = $this->coerceTypes($data, $model);
+
+        // PUT = full replacement: null out any nullable fields not present in the body
+        foreach ($model->fields as $field) {
+            if (!array_key_exists($field->name, $data) && $field->nullable) {
+                $data[$field->name] = null;
+            }
+        }
+
         $data['updated_at'] = date('Y-m-d H:i:s');
 
         (new QueryBuilder($this->conn))->table($model->tableName)->where('id', $id)->update($data);
@@ -132,6 +142,7 @@ class CrudHandler
             return Response::error('Validation failed', 422, ['errors' => $errors]);
         }
 
+        $data = $this->coerceTypes($data, $model);
         $data['updated_at'] = date('Y-m-d H:i:s');
 
         (new QueryBuilder($this->conn))->table($model->tableName)->where('id', $id)->update($data);
@@ -167,6 +178,30 @@ class CrudHandler
             fn($key) => in_array($key, $allowed, true),
             ARRAY_FILTER_USE_KEY
         );
+    }
+
+    /**
+     * PDO binds PHP false as '' (empty string) instead of 0.
+     * Coerce boolean and integer fields to their proper scalar types before binding.
+     */
+    private function coerceTypes(array $data, ModelDefinition $model): array
+    {
+        foreach ($data as $key => $value) {
+            if ($value === null) {
+                continue;
+            }
+            $field = $model->field($key);
+            if ($field === null) {
+                continue;
+            }
+            $data[$key] = match ($field->type) {
+                'boolean'  => (int)(bool)$value,
+                'int', 'relation' => (int)$value,
+                'float'    => (float)$value,
+                default    => $value,
+            };
+        }
+        return $data;
     }
 
     private function validateInput(array $data, ModelDefinition $model, bool $partial): array
