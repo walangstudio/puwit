@@ -157,6 +157,8 @@ curl -X POST https://yourdomain.com/admin/models \
 
 This creates the `puwit_m_product` table and registers the CRUD routes in the running process.
 
+Add `"public": true` to make GET endpoints on this model accessible without any authentication — useful for public-facing content like blog posts or product listings. Write operations always require auth regardless.
+
 **3. Use the API**
 
 ```bash
@@ -317,12 +319,14 @@ There are three scopes and they stack:
 
 | Method | Path | Scope |
 |--------|------|-------|
-| GET | `/api/{model}` | read |
+| GET | `/api/{model}` | read (none if model is public) |
 | POST | `/api/{model}` | write |
-| GET | `/api/{model}/{id}` | read |
+| GET | `/api/{model}/{id}` | read (none if model is public) |
 | PUT | `/api/{model}/{id}` | write |
 | PATCH | `/api/{model}/{id}` | write |
 | DELETE | `/api/{model}/{id}` | write |
+
+PUT replaces the full record. Nullable fields not present in the request body are set to `null`.
 
 Query parameters for list endpoints:
 
@@ -369,7 +373,8 @@ puwit/
 │   ├── Http/
 │   │   ├── Request.php
 │   │   ├── Response.php
-│   │   └── Router.php
+│   │   ├── Router.php
+│   │   └── OpenApiGenerator.php
 │   ├── Middleware/
 │   │   ├── Pipeline.php
 │   │   ├── CorsMiddleware.php
@@ -397,10 +402,18 @@ puwit/
 │   └── Admin/
 │       ├── ModelController.php
 │       ├── ApiKeyController.php
-│       └── UserController.php
-└── tests/
-    ├── Unit/
-    └── Integration/
+│       ├── UserController.php
+│       └── DocsController.php
+├── tests/
+│   ├── Unit/
+│   └── Integration/
+└── e2e/
+    ├── BaseE2ETest.php
+    ├── AuthE2ETest.php
+    ├── CrudE2ETest.php
+    ├── PublicModelE2ETest.php
+    ├── DocsE2ETest.php
+    └── .env.e2e.example
 ```
 
 ---
@@ -411,10 +424,11 @@ These are created on first boot and should not be modified directly.
 
 | Table | Contents |
 |-------|----------|
-| `puwit_models` | model name, table name, fields and relations as JSON |
+| `puwit_models` | model name, table name, fields and relations as JSON, public flag |
 | `puwit_api_keys` | key hash, scopes, expiry, revoked flag |
 | `puwit_users` | username, bcrypt password hash, scopes, active flag |
 | `puwit_jwt_blocklist` | invalidated token IDs and their expiry times |
+| `puwit_login_attempts` | IP address and timestamp of failed login attempts (used for rate limiting) |
 
 User-created tables are prefixed `puwit_m_`.
 
@@ -423,8 +437,15 @@ User-created tables are prefixed `puwit_m_`.
 ## Tests
 
 ```bash
+# unit + integration (SQLite in-memory, no server needed)
 ./vendor/bin/phpunit --testdox
+
+# e2e against a live server
+cp e2e/.env.e2e.example e2e/.env.e2e   # set E2E_BASE_URL and E2E_ADMIN_KEY
+./vendor/bin/phpunit -c phpunit.e2e.xml --testdox
 ```
+
+The e2e suite is skipped automatically when `E2E_BASE_URL` is not set, so it never runs in CI unless you configure it.
 
 ---
 
@@ -454,11 +475,13 @@ If you need any of the above, put a backend in front of PUWIT that enforces your
 ## Security notes
 
 - `JWT_SECRET` must be at least 32 characters. firebase/php-jwt will reject shorter keys.
-- Remove `PUWIT_ADMIN_KEY` from `.env` once you have a real admin key in the database.
+- Remove `PUWIT_ADMIN_KEY` from `.env` once you have a real admin key in the database. Requests using the bootstrap key will receive an `X-Puwit-Warning` header as a reminder.
 - Set `APP_DEBUG=false` in production. When debug is on, stack traces are included in error responses.
 - Run over HTTPS in production. Both API keys and JWTs are bearer credentials and should not travel over plain HTTP.
 - Model names and field names must be lowercase (`/^[a-z][a-z0-9_]+$/`). This prevents case-insensitive column collisions on MySQL.
 - The `puwit_jwt_blocklist` table is pruned automatically on every logout call (expired entries are deleted before the new one is inserted).
+- Login attempts are rate-limited to 10 failures per IP per 60 seconds. Exceeding the limit returns 429.
+- `CORS_ORIGINS` accepts a comma-separated list of allowed origins (e.g. `https://app.example.com,https://admin.example.com`). When set to anything other than `*`, the server reflects the matched origin and adds `Vary: Origin`. Use `*` only in development.
 
 ---
 
