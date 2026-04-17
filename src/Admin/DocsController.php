@@ -24,7 +24,8 @@ class DocsController
 <html>
 <head><title>PUWIT API</title><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
 <body>
-<script id="api-reference" data-url="/openapi.json"></script>
+<script id="api-reference"></script>
+<script>document.currentScript.previousElementSibling.dataset.url=new URL('openapi.json',location.href).href</script>
 <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </body>
 </html>
