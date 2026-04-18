@@ -14,7 +14,7 @@ class QueryBuilder
     private ?int   $limit    = null;
     private ?int   $offset   = null;
 
-    public function __construct(private readonly Connection $conn) {}
+    public function __construct(private Connection $conn) {}
 
     public function table(string $table): self
     {

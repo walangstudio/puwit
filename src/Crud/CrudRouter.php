@@ -12,9 +12,9 @@ use Puwit\Model\ModelRegistry;
 class CrudRouter
 {
     public function __construct(
-        private readonly Router      $router,
-        private readonly ModelRegistry $registry,
-        private readonly CrudHandler $handler,
+        private Router      $router,
+        private ModelRegistry $registry,
+        private CrudHandler $handler,
     ) {}
 
     public function boot(): void

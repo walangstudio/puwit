@@ -14,9 +14,9 @@ use Puwit\Model\ModelRegistry;
 class AuthMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly ApiKeyGuard   $apiKeyGuard,
-        private readonly JwtGuard      $jwtGuard,
-        private readonly ModelRegistry $registry,
+        private ApiKeyGuard   $apiKeyGuard,
+        private JwtGuard      $jwtGuard,
+        private ModelRegistry $registry,
     ) {}
 
     private const PUBLIC_ROUTES = [

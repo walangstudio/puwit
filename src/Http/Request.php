@@ -12,12 +12,12 @@ class Request
     private array $attributes = [];
 
     public function __construct(
-        private readonly string  $method,
-        private readonly string  $path,
-        private readonly array   $headers,
+        private string  $method,
+        private string  $path,
+        private array   $headers,
         array $query,
         array $body,
-        private readonly ?string $clientIp = null,
+        private ?string $clientIp = null,
     ) {
         $this->query = $query;
         $this->body  = $body;

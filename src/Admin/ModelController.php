@@ -16,11 +16,11 @@ use Puwit\Model\ModelValidator;
 class ModelController
 {
     public function __construct(
-        private readonly Connection      $conn,
-        private readonly ModelRegistry   $registry,
-        private readonly ModelValidator  $validator,
-        private readonly SchemaBuilder   $schema,
-        private readonly CrudRouter      $crudRouter,
+        private Connection      $conn,
+        private ModelRegistry   $registry,
+        private ModelValidator  $validator,
+        private SchemaBuilder   $schema,
+        private CrudRouter      $crudRouter,
     ) {}
 
     public function index(Request $request): Response

@@ -11,7 +11,7 @@ use Puwit\Database\Connection;
 
 class JwtGuard
 {
-    public function __construct(private readonly Connection $conn) {}
+    public function __construct(private Connection $conn) {}
 
     public function validate(string $token): ?TokenContext
     {

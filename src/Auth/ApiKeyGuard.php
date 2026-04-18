@@ -9,7 +9,7 @@ use Puwit\Database\Connection;
 
 class ApiKeyGuard
 {
-    public function __construct(private readonly Connection $conn) {}
+    public function __construct(private Connection $conn) {}
 
     public bool $bootstrapKeyUsed = false;
 
