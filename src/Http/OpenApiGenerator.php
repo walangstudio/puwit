@@ -14,7 +14,7 @@ class OpenApiGenerator
     {
         $spec = [
             'openapi' => '3.1.0',
-            'info'    => ['title' => 'PUWIT API', 'version' => '0.3.0'],
+            'info'    => ['title' => 'PUWIT API', 'version' => '0.3.1'],
             'servers' => [['url' => $serverUrl ?: '/']],
             'components' => [
                 'securitySchemes' => [
