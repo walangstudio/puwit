@@ -8,7 +8,7 @@ use Puwit\Database\Connection;
 
 class SystemMigration
 {
-    public function __construct(private readonly Connection $conn) {}
+    public function __construct(private Connection $conn) {}
 
     public function run(): void
     {

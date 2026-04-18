@@ -9,8 +9,8 @@ use Puwit\Database\Connection;
 class RelationResolver
 {
     public function __construct(
-        private readonly Connection     $conn,
-        private readonly ModelRegistry  $registry,
+        private Connection     $conn,
+        private ModelRegistry  $registry,
     ) {}
 
     public function resolve(ModelDefinition $model, array $rows, array $withs): array

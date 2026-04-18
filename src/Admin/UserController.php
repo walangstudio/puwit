@@ -12,8 +12,8 @@ use Puwit\Http\Response;
 class UserController
 {
     public function __construct(
-        private readonly Connection $conn,
-        private readonly JwtGuard   $jwtGuard,
+        private Connection $conn,
+        private JwtGuard   $jwtGuard,
     ) {}
 
     public function index(Request $request): Response

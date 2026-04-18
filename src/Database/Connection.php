@@ -9,8 +9,8 @@ use Puwit\Database\Dialects\DialectInterface;
 class Connection
 {
     public function __construct(
-        private readonly \PDO $pdo,
-        private readonly DialectInterface $dialect,
+        private \PDO $pdo,
+        private DialectInterface $dialect,
     ) {}
 
     public function dialect(): DialectInterface
