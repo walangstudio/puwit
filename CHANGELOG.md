@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.1] - 2026-04-18
+
+### Added
+- Login rate limiting — 10 failed attempts per IP per 60 seconds returns 429. Tracked via `puwit_login_attempts` system table.
+- `X-Puwit-Warning` response header emitted on any request authenticated with the bootstrap `PUWIT_ADMIN_KEY`, as a reminder to replace it.
+- CORS multi-origin support — `CORS_ORIGINS` now accepts a comma-separated list of allowed origins. The server reflects the matched request origin and adds `Vary: Origin`. Wildcard `*` behaviour is unchanged.
+- E2E test suite (`e2e/`) against a live HTTP server via curl. Configured via `e2e/.env.e2e`; skipped automatically when `E2E_BASE_URL` is unset. Separate `phpunit.e2e.xml` config keeps it out of the default test run.
+
+### Fixed
+- PUT full-replacement semantics — nullable fields absent from the request body are now set to `null` instead of being silently left at their previous values.
+- Boolean `false` was stored as an empty string `''` via PDO's default `PARAM_STR` binding. Type coercion (`boolean → int`, `int/relation → int`, `float → float`) now runs after validation on all mutating operations.
+- Apache `mod_rewrite` strips the `Authorization` header before PHP sees it, causing all Bearer JWT auth to fail on shared hosts. Fixed via `RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]` in `.htaccess`.
+- PostgreSQL `columnExists()` now filters by `table_schema = 'public'` to prevent false positives in multi-schema databases.
+- `APP_ENV` and `APP_DEBUG` default to `production` / `false` in `.env.example`.
+- Removed `readonly` from constructor-promoted properties to restore PHP 8.0 compatibility (`readonly` promotion requires 8.1+).
+
+---
+
 ## [0.3.0] - 2026-03-27
 
 ### Added

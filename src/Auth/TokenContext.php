@@ -7,9 +7,9 @@ namespace Puwit\Auth;
 class TokenContext
 {
     public function __construct(
-        public readonly string $type,
-        public readonly string|int|null $id,
-        public readonly array $scopes,
+        public string $type,
+        public string|int|null $id,
+        public array $scopes,
     ) {}
 
     public function hasScope(string $scope): bool

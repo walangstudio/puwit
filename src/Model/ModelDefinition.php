@@ -8,11 +8,11 @@ class ModelDefinition
 {
     /** @param FieldDefinition[] $fields */
     public function __construct(
-        public readonly string $name,
-        public readonly string $tableName,
-        public readonly array  $fields,
-        public readonly array  $relations = [],
-        public readonly bool   $isPublic  = false,
+        public string $name,
+        public string $tableName,
+        public array  $fields,
+        public array  $relations = [],
+        public bool   $isPublic  = false,
     ) {}
 
     public static function fromArray(array $data): self

@@ -7,11 +7,11 @@ namespace Puwit\Model;
 class FieldDefinition
 {
     public function __construct(
-        public readonly string  $name,
-        public readonly string  $type,
-        public readonly bool    $nullable = true,
-        public readonly mixed   $default = null,
-        public readonly ?string $relation = null,
+        public string  $name,
+        public string  $type,
+        public bool    $nullable = true,
+        public mixed   $default = null,
+        public ?string $relation = null,
     ) {}
 
     public static function fromArray(array $data): self

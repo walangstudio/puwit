@@ -8,13 +8,13 @@ use Puwit\Model\ModelRegistry;
 
 class OpenApiGenerator
 {
-    public function __construct(private readonly ModelRegistry $registry) {}
+    public function __construct(private ModelRegistry $registry) {}
 
     public function generate(string $serverUrl = ''): array
     {
         $spec = [
             'openapi' => '3.1.0',
-            'info'    => ['title' => 'PUWIT API', 'version' => '0.3.0'],
+            'info'    => ['title' => 'PUWIT API', 'version' => '0.3.1'],
             'servers' => [['url' => $serverUrl ?: '/']],
             'components' => [
                 'securitySchemes' => [

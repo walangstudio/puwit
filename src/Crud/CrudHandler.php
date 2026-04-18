@@ -14,8 +14,8 @@ use Puwit\Model\RelationResolver;
 class CrudHandler
 {
     public function __construct(
-        private readonly Connection       $conn,
-        private readonly RelationResolver $resolver,
+        private Connection       $conn,
+        private RelationResolver $resolver,
     ) {}
 
     public function index(Request $request, ModelDefinition $model): Response

@@ -10,7 +10,7 @@ use Puwit\Http\Response;
 
 class DocsController
 {
-    public function __construct(private readonly OpenApiGenerator $generator) {}
+    public function __construct(private OpenApiGenerator $generator) {}
 
     public function openapi(Request $request): Response
     {

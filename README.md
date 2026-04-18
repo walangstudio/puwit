@@ -4,7 +4,7 @@
 
 **PHP Universal Web Integration Toolkit**
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue?style=flat-square)](CHANGELOG.md)
 [![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 [![Composer](https://img.shields.io/badge/Composer-PSR--4-F28D1A?style=flat-square&logo=composer&logoColor=white)](https://getcomposer.org)

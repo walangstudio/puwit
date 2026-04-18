@@ -11,7 +11,7 @@ class ModelRegistry
     private array $cache  = [];
     private bool  $loaded = false;
 
-    public function __construct(private readonly Connection $conn) {}
+    public function __construct(private Connection $conn) {}
 
     public function all(): array
     {

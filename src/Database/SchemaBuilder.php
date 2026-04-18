@@ -9,7 +9,7 @@ use Puwit\Model\ModelDefinition;
 
 class SchemaBuilder
 {
-    public function __construct(private readonly Connection $conn) {}
+    public function __construct(private Connection $conn) {}
 
     public function createTable(ModelDefinition $model): void
     {
